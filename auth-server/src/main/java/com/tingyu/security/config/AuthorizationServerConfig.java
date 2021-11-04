@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.E
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
+import org.springframework.security.oauth2.provider.client.JdbcClientDetailsService;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.code.InMemoryAuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
@@ -19,6 +20,7 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
 
 import javax.annotation.Resource;
+import javax.sql.DataSource;
 
 @EnableAuthorizationServer
 @Configuration
@@ -30,6 +32,9 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     @Resource
     RedisConnectionFactory redisConnectionFactory;
 
+    @Resource
+    DataSource dataSource;
+
     /**
      * 指明生成的token往哪里存储，暂时存在内存中
      **/
@@ -38,17 +43,17 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
         return new RedisTokenStore(redisConnectionFactory);
     }
 
-    /**
-     *
-     **/
+    @Bean
+    ClientDetailsService clientDetailsService() {
+        return new JdbcClientDetailsService(dataSource);
+    }
+
     @Bean
     AuthorizationServerTokenServices authorizationServerTokenServices() {
         DefaultTokenServices services = new DefaultTokenServices();
         services.setClientDetailsService(clientDetailsService);
         services.setSupportRefreshToken(true);
         services.setTokenStore(tokenStore());
-        services.setAccessTokenValiditySeconds(60 * 60 * 2);
-        services.setRefreshTokenValiditySeconds(60 * 60 * 24 * 3);
         return services;
     }
 
@@ -67,9 +72,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
      **/
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-        clients.inMemory()
-                .withClient("client").secret(new BCryptPasswordEncoder().encode("client")).resourceIds("client1")
-                .authorizedGrantTypes("authorization_code","refresh_token").scopes("all").redirectUris("http://localhost:8082/index.html");
+        clients.withClientDetails(clientDetailsService());
     }
 
     /**
