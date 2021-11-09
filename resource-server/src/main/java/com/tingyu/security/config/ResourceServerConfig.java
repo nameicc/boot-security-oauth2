@@ -7,26 +7,32 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.E
 import org.springframework.security.oauth2.config.annotation.web.configuration.ResourceServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configurers.ResourceServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
+import org.springframework.security.oauth2.provider.token.TokenStore;
+
+import javax.annotation.Resource;
 
 @EnableResourceServer
 @Configuration
 public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
 
+    @Resource
+    private TokenStore tokenStore;
+
     /**
      * 配置远程token认证服务
      **/
-    @Bean
+    /*@Bean
     RemoteTokenServices tokenServices() {
         RemoteTokenServices services = new RemoteTokenServices();
         services.setCheckTokenEndpointUrl("http://localhost:8080/oauth/check_token");
         services.setClientId("client");
         services.setClientSecret("client");
         return services;
-    }
+    }*/
 
     @Override
     public void configure(ResourceServerSecurityConfigurer resources) throws Exception {
-        resources.resourceId("client1").tokenServices(tokenServices());
+        resources.resourceId("client1").tokenStore(tokenStore);
     }
 
     @Override

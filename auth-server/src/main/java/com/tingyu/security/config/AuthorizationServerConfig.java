@@ -16,11 +16,14 @@ import org.springframework.security.oauth2.provider.code.AuthorizationCodeServic
 import org.springframework.security.oauth2.provider.code.InMemoryAuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
+import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
 import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
+import java.util.Arrays;
 
 @EnableAuthorizationServer
 @Configuration
@@ -35,13 +38,19 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     @Resource
     DataSource dataSource;
 
+    @Resource
+    private TokenStore tokenStore;
+
+    @Resource
+    private JwtAccessTokenConverter jwtAccessTokenConverter;
+
     /**
      * 指明生成的token往哪里存储，暂时存在内存中
      **/
-    @Bean
+    /*@Bean
     TokenStore tokenStore() {
         return new RedisTokenStore(redisConnectionFactory);
-    }
+    }*/
 
     @Bean
     ClientDetailsService clientDetailsService() {
@@ -53,7 +62,10 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
         DefaultTokenServices services = new DefaultTokenServices();
         services.setClientDetailsService(clientDetailsService);
         services.setSupportRefreshToken(true);
-        services.setTokenStore(tokenStore());
+        services.setTokenStore(tokenStore);
+        TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
+        tokenEnhancerChain.setTokenEnhancers(Arrays.asList(jwtAccessTokenConverter));
+        services.setTokenEnhancer(tokenEnhancerChain);
         return services;
     }
 
