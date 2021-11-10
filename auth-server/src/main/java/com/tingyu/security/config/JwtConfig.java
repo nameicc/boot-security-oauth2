@@ -18,7 +18,7 @@ public class JwtConfig {
 
     @Bean
     JwtAccessTokenConverter jwtAccessTokenConverter() {
-        JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+        JwtAccessTokenConverter converter = new MyJwtAccessTokenConverter();
         converter.setSigningKey(SIGNING_KEY);
         return converter;
     }
